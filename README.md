@@ -2,12 +2,12 @@
 
 一个极简风格的世界时钟锁屏应用。
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
 
-## 预览
+## 简介
 
 SachengTime 是一款专为桌面设计的全屏时钟应用，融合世界时间、实时天气与今日进度追踪功能。采用无干扰的极简界面设计，适合作为电脑锁屏、待机画面或专注工作时的背景时钟。
 
@@ -22,12 +22,6 @@ SachengTime 是一款专为桌面设计的全屏时钟应用，融合世界时�
 - **全屏模式** - 沉浸式全屏体验
 
 ## 快速开始
-
-### 在线使用
-
-直接访问：https://sachengsec.github.io/SachengTime/
-
-### 本地运行
 
 1. 克隆仓库
 ```bash
@@ -87,7 +81,6 @@ npx serve
 ## 浏览器支持
 
 - Chrome / Edge / Firefox / Safari 最新版
-- 支持 PWA，可安装为桌面应用
 
 ## 数据来源
 
@@ -100,7 +93,7 @@ npx serve
 SachengTime/
 ├── index.html          # 主文件（包含 HTML + CSS + JS）
 ├── README.md           # 项目说明
-└── LICENSE             # MIT 许可证
+└── LICENSE             # AGPL-3.0 许可证
 ```
 
 ## 自定义字体（可选）
@@ -116,7 +109,7 @@ SachengTime/
 
 ## 开源协议
 
-[MIT License](LICENSE)
+[AGPL-3.0 License](LICENSE)
 
 ## 致谢
 
@@ -125,4 +118,4 @@ SachengTime/
 
 ---
 
-Made with ❤️ by [sachengsec](https://github.com/sachengsec)
+Made by [sachengsec](https://github.com/sachengsec)

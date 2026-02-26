@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTraveler - 世界时钟版</title>
+    <style>
+        /* --- 1. 字体与基础设置 --- */
+        @font-face {
+            font-family: 'TimeTravelerPalCustom';
+            /* 保持您的本地路径不变 */
+            src: url('file:///C:/Users/10734/Downloads/TimeTravelerPal-Normal-Regular.ttf') format('truetype');
+        }
+
+        :root {
+            --bg-color: #000000;
+            --main-color: #ffffff;
+            --dim-color: #444444;
+            --glow: 0 0 0 transparent;
+            --font-stack: 'TimeTravelerPalCustom', 'Arial Black', sans-serif; 
+            --btn-bg: rgba(255, 255, 255, 0.05);
+            --modal-bg: rgba(20, 20, 20, 0.95);
+        }
+
+        /* 主题定义 */
+        [data-theme="white"] {
+            --bg-color: #ffffff;
+            --main-color: #000000;
+            --dim-color: #888888;
+            --modal-bg: rgba(240, 240, 240, 0.95);
+            --btn-bg: rgba(0, 0, 0, 0.05);
+        }
+        [data-theme="neon"] {
+            --bg-color: #040805;
+            --main-color: #51AD7E; 
+            --dim-color: #2d5135;
+            --glow: 0 0 25px rgba(81, 173, 126, 0.3);
+            --modal-bg: rgba(4, 8, 5, 0.95);
+            --btn-bg: rgba(81, 173, 126, 0.1);
+        }
+        [data-theme="retro"] {
+            --bg-color: #1a1000;
+            --main-color: #ffb000;
+            --dim-color: #553300;
+            --glow: 0 0 15px rgba(255, 176, 0, 0.3);
+            --modal-bg: rgba(26, 16, 0, 0.95);
+            --btn-bg: rgba(255, 176, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--main-color);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: var(--font-stack);
+            overflow: hidden;
+            transition: background 0.6s, color 0.6s;
+            cursor: default;
+            user-select: none;
+        }
+
+        /* 顶部信息 - 保持 1.8rem */
+        .top-info {
+            position: fixed;
+            top: 35px;
+            font-size: 1.8rem; 
+            color: var(--main-color);
+            opacity: 0.3; 
+            z-index: 20;
+            transition: opacity 0.5s;
+        }
+        body:hover .top-info { opacity: 0.8; }
+        
+        #weather-box { left: 35px; text-align: left; }
+        #day-progress-box { right: 35px; text-align: right; }
+
+        /* 时钟区域 */
+        .clock-container {
+            text-align: center;
+            z-index: 10;
+            text-shadow: var(--glow);
+            transition: transform 1s ease-in-out;
+            cursor: pointer;
+        }
+
+        #time {
+            font-size: 20vw; 
+            line-height: 1;
+            letter-spacing: 0.05em;
+        }
+
+        #date {
+            font-size: 2.5vw;
+            color: var(--dim-color);
+            margin-top: 10px;
+            letter-spacing: 0.1em;
+        }
+
+        #location-label {
+            font-size: 1vw;
+            color: var(--dim-color);
+            margin-top: 5px;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
+
+        /* 右下角设置按钮 */
+        .settings-btn {
+            position: fixed;
+            bottom: 35px;
+            right: 35px;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--btn-bg);
+            border: 1px solid var(--dim-color);
+            color: var(--main-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 50;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        body:hover .settings-btn { opacity: 0.6; }
+        .settings-btn:hover { opacity: 1; transform: rotate(90deg) scale(1.1); background: var(--main-color); color: var(--bg-color); }
+
+        /* 设置弹窗 */
+        #settings-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--modal-bg);
+            border: 1px solid var(--dim-color);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            min-width: 350px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px; 
+        }
+        .modal-input {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            border: 1px solid var(--dim-color);
+            color: var(--main-color);
+            font-family: inherit;
+            font-size: 1.2rem;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .modal-input:focus { outline: none; border-color: var(--main-color); }
+        
+        .modal-btn {
+            padding: 12px 30px;
+            background: var(--main-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        /* 取消按钮样式 */
+        .modal-btn.cancel {
+            background: transparent;
+            color: var(--dim-color);
+            border: 1px solid var(--dim-color);
+            margin-top: 10px; 
+        }
+        .modal-btn.cancel:hover {
+            color: var(--main-color);
+            border-color: var(--main-color);
+        }
+
+        .modal-msg { font-size: 0.9rem; color: var(--dim-color); min-height: 1.2em; }
+
+        /* 底部控制栏 */
+        .controls {
+            position: fixed; bottom: 35px;
+            display: flex; gap: 15px;
+            opacity: 0; transition: opacity 0.4s; z-index: 30;
+        }
+        body:hover .controls { opacity: 1; }
+        .ctrl-btn {
+            background: var(--btn-bg); border: 1px solid var(--dim-color);
+            color: var(--main-color); padding: 8px 20px; border-radius: 20px;
+            cursor: pointer; font-family: inherit; font-size: 0.8rem;
+        }
+        .ctrl-btn:hover { background: var(--main-color); color: var(--bg-color); }
+
+    </style>
+</head>
+<body>
+
+    <!-- 顶部信息 -->
+    <div id="weather-box" class="top-info">定位中...</div>
+    <div id="day-progress-box" class="top-info">00.00%</div>
+
+    <!-- 时钟主体 -->
+    <div class="clock-container" id="clockBox">
+        <div id="time">00:00</div>
+        <div id="date">LOADING...</div>
+        <div id="location-label">TIMEZONE</div>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="controls">
+        <button class="ctrl-btn" onclick="toggleTheme()">🎨 切换主题</button>
+        <button class="ctrl-btn" onclick="toggleFullScreen()">⛶ 全屏</button>
+    </div>
+
+    <!-- 设置入口 -->
+    <button class="settings-btn" onclick="openSettings()">⚙️</button>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal">
+        <div class="modal-content">
+            <h3>切换城市</h3>
+            <div id="search-msg" class="modal-msg"></div>
+            
+            <!-- 修改了 placeholder -->
+            <input type="text" id="city-input" class="modal-input" placeholder="输入城市 (如: 上海 / 纽约)" onkeydown="if(event.keyCode==13) saveLocation()">
+            
+            <button class="modal-btn" onclick="saveLocation()">确认切换</button>
+            <button class="modal-btn cancel" onclick="closeSettings()">取消</button>
+        </div>
+    </div>
+
+<script>
+    // --- 1. 配置管理 ---
+    // 默认配置：合肥，时区 Asia/Shanghai
+    let config = {
+        lat: 31.86,
+        lon: 117.32,
+        cityName: "合肥·瑶海",
+        timezone: "Asia/Shanghai" 
+    };
+
+    // 读取本地存储
+    const saved = localStorage.getItem('timeTravelerConfig_v2');
+    if (saved) {
+        try { config = JSON.parse(saved); } catch(e){}
+    }
+
+    // --- 2. 核心时间逻辑 (带时区处理) ---
+    function updateClock() {
+        const now = new Date();
+        
+        // 使用 Intl API 获取目标时区的时间组件
+        const options = { 
+            timeZone: config.timezone, 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit',
+            weekday: 'short',
+            month: 'numeric',
+            day: 'numeric'
+        };
+        
+        const formatter = new Intl.DateTimeFormat('zh-CN', options);
+        const parts = formatter.formatToParts(now);
+        const getPart = (type) => parts.find(p => p.type === type).value;
+        
+        const hourStr = getPart('hour');
+        const minStr = getPart('minute');
+        const monthStr = getPart('month');
+        const dayStr = getPart('day');
+        const weekStr = getPart('weekday');
+
+        // 更新界面
+        document.getElementById('time').innerText = `${hourStr}:${minStr}`;
+        document.getElementById('date').innerText = `${monthStr}月${dayStr}日 ${weekStr}`;
+        
+        // 只显示时区，去掉城市名
+        document.getElementById('location-label').innerText = config.timezone;
+
+        // 计算目标时区的“今日进度”
+        const h = parseInt(hourStr, 10);
+        const m = parseInt(minStr, 10);
+        const s = now.getSeconds(); 
+        const msPassed = (h * 3600 + m * 60 + s) * 1000;
+        const percent = (msPassed / 86400000) * 100;
+        document.getElementById('day-progress-box').innerText = `今日剩余 ${(100 - percent).toFixed(2)}%`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock(); 
+
+    // --- 3. 天气逻辑 ---
+    function getWeatherDesc(code) {
+        if (code === 0) return "晴";
+        if ([1,2,3].includes(code)) return "多云";
+        if ([45,48].includes(code)) return "雾";
+        if (code >= 51 && code <= 67) return "雨";
+        if (code >= 71 && code <= 77) return "雪";
+        if (code >= 80 && code <= 99) return "雷雨";
+        return "阴";
+    }
+
+    async function fetchWeather() {
+        const box = document.getElementById('weather-box');
+        try {
+            // 请求天气
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${config.lat}&longitude=${config.lon}&current_weather=true&timezone=auto`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.current_weather) {
+                const temp = Math.round(data.current_weather.temperature);
+                const desc = getWeatherDesc(data.current_weather.weathercode);
+                box.innerHTML = `${config.cityName} · ${desc} ${temp}°C`;
+            }
+        } catch (e) {
+            console.error(e);
+            box.innerText = "天气数据不可用";
+        }
+    }
+    fetchWeather();
+    setInterval(fetchWeather, 600000); // 10分钟刷新
+
+    // --- 4. 搜索与设置逻辑 ---
+    const modal = document.getElementById('settings-modal');
+    const msgBox = document.getElementById('search-msg');
+
+    function openSettings() {
+        modal.style.display = 'flex';
+        document.getElementById('city-input').value = '';
+        msgBox.innerText = '';
+        document.getElementById('city-input').focus();
+    }
+    
+    function closeSettings() {
+        modal.style.display = 'none';
+    }
+
+    async function saveLocation() {
+        const input = document.getElementById('city-input').value.trim();
+        if (!input) return;
+
+        msgBox.innerText = "正在搜索全球数据库...";
+        
+        try {
+            const searchUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=1&language=zh&format=json`;
+            const res = await fetch(searchUrl);
+            const data = await res.json();
+
+            if (data.results && data.results.length > 0) {
+                const result = data.results[0];
+                
+                // 更新配置
+                config.lat = result.latitude;
+                config.lon = result.longitude;
+                config.cityName = result.name;
+                config.timezone = result.timezone; 
+
+                // 保存
+                localStorage.setItem('timeTravelerConfig_v2', JSON.stringify(config));
+
+                // 刷新
+                updateClock();
+                fetchWeather();
+
+                msgBox.innerText = `已切换至：${result.name}`;
+                msgBox.style.color = "var(--main-color)";
+                
+                setTimeout(closeSettings, 800);
+            } else {
+                msgBox.innerText = "未找到该城市，请尝试拼音";
+                msgBox.style.color = "#ff4444";
+            }
+        } catch (e) {
+            msgBox.innerText = "网络连接失败";
+        }
+    }
+
+    // --- 5. 交互与主题 ---
+    const themes = ['', 'white', 'neon', 'retro'];
+    let themeIdx = 0;
+    
+    function toggleTheme() {
+        themeIdx = (themeIdx + 1) % themes.length;
+        if (themes[themeIdx]) document.body.setAttribute('data-theme', themes[themeIdx]);
+        else document.body.removeAttribute('data-theme');
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+    }
+
+    // 点击时钟切换主题
+    document.getElementById('clockBox').addEventListener('click', toggleTheme);
+    // 点击遮罩关闭
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeSettings(); });
+
+    // 防烧屏微动
+    setInterval(() => {
+        const x = Math.random() * 10 - 5;
+        const y = Math.random() * 10 - 5;
+        document.getElementById('clockBox').style.transform = `translate(${x}px, ${y}px)`;
+    }, 60000);
+
+</script>
+</body>
+</html>
